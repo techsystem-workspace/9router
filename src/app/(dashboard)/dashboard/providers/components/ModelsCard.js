@@ -108,7 +108,7 @@ AddCustomModelModal.propTypes = {
 // ── ModelsCard ─────────────────────────────────────────────────
 // Self-contained card: shows models for a provider, filtered by optional `kindFilter`.
 // kindFilter: if provided, only shows models with matching type/kinds field.
-export default function ModelsCard({ providerId, kindFilter, providerAliasOverride }) {
+export default function ModelsCard({ providerId, kindFilter, providerAliasOverride, extraActions = null }) {
   const { copied, copy } = useCopyToClipboard();
   const [modelAliases, setModelAliases] = useState({});
   const [customModels, setCustomModels] = useState([]);
@@ -134,6 +134,11 @@ export default function ModelsCard({ providerId, kindFilter, providerAliasOverri
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    const onChange = () => { fetchData(); };
+    window.addEventListener("customModelChanged", onChange);
+    return () => window.removeEventListener("customModelChanged", onChange);
+  }, [fetchData]);
 
   const handleSetAlias = async (modelId, alias) => {
     const fullModel = `${providerAlias}/${modelId}`;
@@ -218,8 +223,9 @@ export default function ModelsCard({ providerId, kindFilter, providerAliasOverri
   return (
     <>
       <Card>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-semibold">Models{kindFilter ? ` — ${kindFilter.toUpperCase()}` : ""}</h2>
+          {extraActions}
         </div>
         {testError && <p className="text-xs text-red-500 mb-3 break-words">{testError}</p>}
 
@@ -287,4 +293,5 @@ ModelsCard.propTypes = {
   providerId: PropTypes.string.isRequired,
   kindFilter: PropTypes.string, // e.g. "tts", "embedding" — filters models shown
   providerAliasOverride: PropTypes.string, // override alias (e.g. for custom-embedding nodes using prefix)
+  extraActions: PropTypes.node,
 };

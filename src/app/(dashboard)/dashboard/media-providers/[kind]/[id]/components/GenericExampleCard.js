@@ -34,8 +34,9 @@ function toImagePreviewSrc(value) {
   return `data:image/png;base64,${trimmed}`;
 }
 
-// laya-hook: customAlias / modelOptions let a local overlay supply the prefix and model list.
-export function GenericExampleCard({ providerId, kind, customAlias, modelOptions }) {
+// laya-hook: customAlias / modelOptions supply the prefix and model list.
+// payloadEditor replaces the fixed System One question with a full payload form.
+export function GenericExampleCard({ providerId, kind, customAlias, modelOptions, payloadEditor = null }) {
   const providerAlias = customAlias || getProviderAlias(providerId);
   const resolvedId = resolveProviderId(providerAlias);
   const safeProviderAlias = customAlias || (resolvedId === providerId ? providerAlias : providerId);
@@ -45,18 +46,30 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
 
   // Get models for this kind (e.g., type="image")
   const registryModels = getModelsByProviderId(providerId).filter((m) => getModelKind(m) === kind);
-  const kindModels = modelOptions?.length ? modelOptions : registryModels;
+  // An explicit list, including an empty one, replaces the registry. Custom nodes pass the models the user added.
+  const kindModels = Array.isArray(modelOptions) ? modelOptions : registryModels;
   // Kinds that need a model identifier in the request (image/video/music/systemone)
   const KIND_NEEDS_MODEL = new Set(["image", "video", "music", "imageToText", "systemone"]);
   const needsModel = KIND_NEEDS_MODEL.has(kind);
   const allowManualModel = needsModel && kindModels.length === 0;
   const [selectedModel, setSelectedModel] = useState(kindModels[0]?.id ?? "");
+  useEffect(() => {
+    if (!Array.isArray(modelOptions)) return;
+    if (modelOptions.length === 0) {
+      setSelectedModel("");
+      return;
+    }
+    setSelectedModel((current) => (
+      modelOptions.some((model) => model.id === current) ? current : modelOptions[0].id
+    ));
+  }, [modelOptions]);
   const selectedModelObj = kindModels.find((m) => m.id === selectedModel);
   const supportsEdit = !!selectedModelObj?.capabilities?.includes("edit");
   const supportsMask = !!selectedModelObj?.capabilities?.includes("mask");
 
   const [input, setInput] = useState(safeExConfig.defaultInput || "");
   const [question, setQuestion] = useState("Does this request require urgent attention?");
+  const [questions, setQuestions] = useState(() => payloadEditor?.initialQuestions || []);
   const [refImage, setRefImage] = useState("");
   const [maskImage, setMaskImage] = useState("");
   const [extraValues, setExtraValues] = useState(() =>
@@ -120,14 +133,17 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
     acc[k] = v;
     return acc;
   }, {});
-  const systemoneQuestions = kind === "systemone" ? {
-    questions: {
-      is_urgent: {
-        type: "noul",
-        instructions: question.trim() || "Does this request require urgent attention?",
+  const systemoneQuestions = payloadEditor
+    ? { questions: payloadEditor.toBody(questions) }
+    : kind === "systemone" ? {
+      questions: {
+        is_urgent: {
+          type: "noul",
+          instructions: question.trim() || "Does this request require urgent attention?",
+        },
       },
-    },
-  } : {};
+    } : {};
+  const payloadReady = !payloadEditor || payloadEditor.isReady(questions);
   const requestBody = {
     model: modelFull,
     [exConfig.bodyKey]: input,
@@ -148,7 +164,7 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
   -d '${JSON.stringify(requestBody)}'${wantBinary ? " \\\n  --output image.png" : ""}`;
 
   const handleRun = async () => {
-    if (!input.trim() || !modelFull) return;
+    if (!input.trim() || !modelFull || (payloadEditor && !payloadEditor.isReady(questions))) return;
     setRunning(true);
     setError("");
     setResult(null);
@@ -240,6 +256,7 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
     return out;
   };
   const resultJson = result ? JSON.stringify(maskB64(result.data), null, 2) : "";
+  const PayloadFields = payloadEditor?.Fields || null;
 
   return (
     <Card>
@@ -319,48 +336,59 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
           </Row>
         )}
 
-        {/* Input */}
-        <Row label={exConfig.inputLabel}>
-          <div className="relative">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={exConfig.inputPlaceholder}
-              className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
-            />
-            {input && (
-              <button
-                type="button"
-                onClick={() => setInput("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
-              >
-                <span className="material-symbols-outlined text-[14px]">close</span>
-              </button>
-            )}
-          </div>
-        </Row>
+        {/* Input. Custom System One replaces this with the full payload form. */}
+        {PayloadFields ? (
+          <PayloadFields
+            input={input}
+            onInput={setInput}
+            placeholder={exConfig.inputPlaceholder}
+            questions={questions}
+            onQuestions={setQuestions}
+          />
+        ) : (
+          <>
+            <Row label={exConfig.inputLabel}>
+              <div className="relative">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={exConfig.inputPlaceholder}
+                  className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
+                />
+                {input && (
+                  <button
+                    type="button"
+                    onClick={() => setInput("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">close</span>
+                  </button>
+                )}
+              </div>
+            </Row>
 
-        {/* Question for System One */}
-        {kind === "systemone" && (
-          <Row label="Question">
-            <div className="relative">
-              <input
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Enter evaluation question or criteria"
-                className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
-              />
-              {question && (
-                <button
-                  type="button"
-                  onClick={() => setQuestion("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[14px]">close</span>
-                </button>
-              )}
-            </div>
-          </Row>
+            {kind === "systemone" && (
+              <Row label="Question">
+                <div className="relative">
+                  <input
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="Enter evaluation question or criteria"
+                    className="w-full px-3 py-1.5 pr-7 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
+                  />
+                  {question && (
+                    <button
+                      type="button"
+                      onClick={() => setQuestion("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                  )}
+                </div>
+              </Row>
+            )}
+          </>
         )}
 
         {/* Reference image (only for edit-capable image models) */}
@@ -498,7 +526,7 @@ export function GenericExampleCard({ providerId, kind, customAlias, modelOptions
               </button>
             <button
               onClick={handleRun}
-              disabled={running || !input.trim() || !modelFull}
+              disabled={running || !input.trim() || !modelFull || !payloadReady}
               className="flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <span className="material-symbols-outlined text-[14px]" style={running ? { animation: "spin 1s linear infinite" } : undefined}>

@@ -1,5 +1,4 @@
-import { addCustomModel, deleteCustomModel } from "@/lib/db/index.js";
-import { LAYA_MODELS } from "./constants.js";
+import { deleteCustomModel, getCustomModels } from "@/lib/db/index.js";
 
 export function layaHealthUrl(systemoneUrl) {
   return `${new URL(systemoneUrl).origin}/health`;
@@ -72,21 +71,12 @@ export async function probeLaya(systemoneUrl, apiKey, modelId) {
   };
 }
 
-export async function seedPresetModels(prefix, models = LAYA_MODELS) {
+export async function removeNodeModels(prefix) {
   const alias = String(prefix || "").trim();
   if (!alias) return;
+  const models = await getCustomModels();
   for (const model of models) {
-    await addCustomModel({ providerAlias: alias, id: model.id, type: "systemone", name: model.name });
-  }
-}
-
-export async function removePresetModels(prefix, models = LAYA_MODELS) {
-  const alias = String(prefix || "").trim();
-  if (!alias) return;
-  for (const model of models) {
+    if (model.providerAlias !== alias || model.type !== "systemone") continue;
     await deleteCustomModel({ providerAlias: alias, id: model.id, type: "systemone" });
   }
 }
-
-export const seedLayaModels = (prefix) => seedPresetModels(prefix, LAYA_MODELS);
-export const removeLayaModels = (prefix) => removePresetModels(prefix, LAYA_MODELS);

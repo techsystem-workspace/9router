@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteProviderConnectionsByProvider, deleteProviderNode, getProviderConnections, getProviderNodeById, updateProviderConnection, updateProviderNode } from "@/models";
-import { afterLayaNodeUpdate, beforeLayaNodeDelete, normalizeLayaNodeUrl } from "@/laya/nodesApi.js"; // laya-hook
+import { beforeLayaNodeDelete, normalizeLayaNodeUrl } from "@/laya/nodesApi.js"; // laya-hook
 
 // PUT /api/provider-nodes/[id] - Update provider node
 export async function PUT(request, { params }) {
@@ -65,7 +65,6 @@ export async function PUT(request, { params }) {
     }
 
     const updated = await updateProviderNode(id, updates);
-    await afterLayaNodeUpdate(node, { ...updates, preset: body.preset }); // laya-hook
 
     const connections = await getProviderConnections({ provider: id });
     await Promise.all(connections.map((connection) => (

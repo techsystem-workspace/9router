@@ -9,7 +9,9 @@ import ConnectionsCard from "@/app/(dashboard)/dashboard/providers/components/Co
 import ModelsCard from "@/app/(dashboard)/dashboard/providers/components/ModelsCard";
 import { GenericExampleCard } from "@/app/(dashboard)/dashboard/media-providers/[kind]/[id]/components/GenericExampleCard";
 import AddLayaModal from "./AddModal";
-import { presetForNode } from "./constants";
+import SystemonePayloadFields from "./PayloadFields";
+import FetchModelsButton from "./FetchModelsButton";
+import { defaultSystemoneQuestions, questionsReady, questionsToBody } from "./payload";
 
 // Detail page for a custom-systemone node. Mounted only for those ids so the
 // upstream media-provider detail page does not grow a second provider shape.
@@ -17,6 +19,7 @@ export default function LayaDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [node, setNode] = useState(null);
+  const [addedModels, setAddedModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
@@ -26,12 +29,40 @@ export default function LayaDetailPage() {
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
-        setNode((d.nodes || []).find((n) => n.id === id) || null);
+        const found = (d.nodes || []).find((n) => n.id === id) || null;
+        setNode(found);
+        if (found?.name) {
+          window.dispatchEvent(new CustomEvent("provider-node-updated", { detail: { id: found.id, name: found.name } }));
+        }
         setLoading(false);
       })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    const prefix = node?.prefix;
+    if (!prefix) return undefined;
+    let cancelled = false;
+    const load = () => {
+      fetch("/api/models/custom", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return;
+          const models = (d.models || [])
+            .filter((model) => model.providerAlias === prefix && model.type === "systemone")
+            .map((model) => ({ id: model.id, name: model.name || model.id }));
+          setAddedModels(models);
+        })
+        .catch(() => { if (!cancelled) setAddedModels([]); });
+    };
+    load();
+    window.addEventListener("customModelChanged", load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("customModelChanged", load);
+    };
+  }, [node?.prefix]);
 
   const handleDelete = async () => {
     if (!confirm("Delete this Laya node?")) return;
@@ -41,8 +72,6 @@ export default function LayaDetailPage() {
 
   if (loading) return <div className="text-text-muted text-sm py-12 text-center">Loading...</div>;
   if (!node) return notFound();
-
-  const preset = presetForNode(node);
 
   return (
     <div className="flex flex-col gap-8">
@@ -97,12 +126,23 @@ export default function LayaDetailPage() {
       </div>
 
       <ConnectionsCard providerId={id} isOAuth={false} apiKeyOptional />
-      <ModelsCard providerId={id} kindFilter="systemone" providerAliasOverride={node.prefix} />
+      <ModelsCard
+        providerId={id}
+        kindFilter="systemone"
+        providerAliasOverride={node.prefix}
+        extraActions={<FetchModelsButton providerId={id} prefix={node.prefix} />}
+      />
       <GenericExampleCard
         providerId={id}
         kind="systemone"
         customAlias={node.prefix}
-        modelOptions={preset.models.length ? preset.models : undefined}
+        modelOptions={addedModels}
+        payloadEditor={{
+          Fields: SystemonePayloadFields,
+          initialQuestions: defaultSystemoneQuestions(),
+          toBody: questionsToBody,
+          isReady: questionsReady,
+        }}
       />
 
       <AddLayaModal
@@ -111,6 +151,9 @@ export default function LayaDetailPage() {
         onClose={() => setEditing(false)}
         onSaved={(updated) => {
           setNode(updated);
+          if (updated?.name) {
+            window.dispatchEvent(new CustomEvent("provider-node-updated", { detail: { id: updated.id, name: updated.name } }));
+          }
           setEditing(false);
         }}
       />

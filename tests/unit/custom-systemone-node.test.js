@@ -102,8 +102,7 @@ describe("custom systemone nodes", () => {
     expect(resolved).toEqual({ provider: node.id, model: "english" });
 
     const models = await ctx.getCustomModels();
-    expect(models.map((m) => m.id).sort()).toEqual(["english", "multilingual", "typed-decisions"]);
-    expect(models.every((m) => m.providerAlias === "sys1" && m.type === "systemone")).toBe(true);
+    expect(models).toEqual([]);
   });
 
   it("confirms a keyless Laya server from GET /health", async () => {
@@ -129,7 +128,7 @@ describe("custom systemone nodes", () => {
     }
   });
 
-  it("defaults the URL and rejects a non-http endpoint", async () => {
+  it("requires a URL and rejects a non-http endpoint", async () => {
     const ctx = await setupApi();
     cleanup = ctx.cleanup;
 
@@ -138,8 +137,7 @@ describe("custom systemone nodes", () => {
       name: "Default",
       prefix: "sys1",
     }));
-    const { node } = await created.json();
-    expect(node.baseUrl).toBe("http://127.0.0.1:8000/v1/systemone");
+    expect(created.status).toBe(400);
 
     const rejected = await ctx.createNode(jsonRequest("https://9router.local/api/provider-nodes", {
       type: "custom-systemone",

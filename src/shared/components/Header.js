@@ -22,7 +22,7 @@ const getPageInfo = (pathname) => {
   const mediaDetailMatch = pathname.match(/\/media-providers\/([^/]+)\/([^/]+)$/);
   if (mediaDetailMatch) {
     const kindId = mediaDetailMatch[1];
-    const providerId = mediaDetailMatch[2];
+    const providerId = decodeURIComponent(mediaDetailMatch[2]);
     const kindConfig = MEDIA_PROVIDER_KINDS.find((k) => k.id === kindId);
     const provider = AI_PROVIDERS[providerId];
     return {
@@ -31,7 +31,9 @@ const getPageInfo = (pathname) => {
       breadcrumbs: [
         { label: "Media Providers", href: `/dashboard/media-providers/${kindId}` },
         { label: kindConfig?.label || kindId, href: `/dashboard/media-providers/${kindId}` },
-        { label: provider?.name || providerId, image: getProviderIconSrc(providerId) },
+        provider
+          ? { label: provider.name, image: getProviderIconSrc(providerId) }
+          : { label: "", fallback: providerId, needsNodeName: true },
       ],
     };
   }
@@ -188,6 +190,37 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
   // Memoize page info to prevent unnecessary recalculations
   const pageInfo = useMemo(() => getPageInfo(pathname), [pathname]);
   const { title, description, icon, breadcrumbs } = pageInfo;
+  const [nodeName, setNodeName] = useState(null);
+  const needsNodeName = breadcrumbs.some((crumb) => crumb.needsNodeName);
+
+  useEffect(() => {
+    if (!needsNodeName) return undefined;
+    const providerId = breadcrumbs.find((crumb) => crumb.needsNodeName)?.fallback;
+    if (!providerId) return undefined;
+    let cancelled = false;
+    setNodeName(null);
+    fetch("/api/provider-nodes", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        const node = (data.nodes || []).find((item) => item.id === providerId);
+        if (!cancelled) setNodeName(node?.name || "");
+      })
+      .catch(() => { if (!cancelled) setNodeName(""); });
+    const onRename = (event) => {
+      if (event.detail?.id === providerId && event.detail?.name) setNodeName(event.detail.name);
+    };
+    window.addEventListener("provider-node-updated", onRename);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("provider-node-updated", onRename);
+    };
+  }, [needsNodeName, breadcrumbs]);
+
+  const shownBreadcrumbs = breadcrumbs.map((crumb) => {
+    if (!crumb.needsNodeName) return crumb;
+    const label = nodeName == null ? "" : (nodeName || crumb.fallback);
+    return { ...crumb, label };
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -242,15 +275,17 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
 
       {/* Page title with breadcrumbs */}
       <div className="flex flex-col min-w-0 flex-1">
-        {breadcrumbs.length > 0 ? (
-          <div className="flex items-center gap-2">
-            {breadcrumbs.map((crumb, index) => (
+        {shownBreadcrumbs.length > 0 ? (
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            {shownBreadcrumbs.map((crumb, index) => {
+              const isCurrent = index === shownBreadcrumbs.length - 1;
+              return (
               <div
-                key={`${crumb.label}-${crumb.href || "current"}`}
-                className="flex items-center gap-2"
+                key={`${crumb.href || "current"}-${index}`}
+                className={`items-center gap-2 min-w-0 ${isCurrent ? "flex flex-1" : "hidden sm:flex shrink-0"}`}
               >
                 {index > 0 && (
-                  <span className="material-symbols-outlined text-text-muted text-base">
+                  <span className="material-symbols-outlined text-text-muted text-base max-sm:!hidden">
                     chevron_right
                   </span>
                 )}
@@ -262,7 +297,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
                     {crumb.label}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     {crumb.image && (
                       <ProviderIcon
                         src={crumb.image}
@@ -278,7 +313,8 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : title ? (
           <div>

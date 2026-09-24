@@ -1,12 +1,15 @@
 services:
   9router:
-    image: decolua/9router:latest
     container_name: 9router
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: always
-    ports:
-      - "20128:20128"
+    # Host network so the saved Laya URL http://127.0.0.1:8000 still reaches
+    # the Laya container published only on the host loopback.
+    network_mode: host
     volumes:
-      - 9router-data:/app/data
+      - ./9router-data:/app/data
     env_file:
       - .env
     environment:
@@ -14,7 +17,7 @@ services:
       PORT: "20128"
       HOSTNAME: "0.0.0.0"
       NODE_ENV: production
-      HEADROOM_URL: http://headroom:8787
+      HEADROOM_URL: http://127.0.0.1:8787
     depends_on:
       - headroom
 

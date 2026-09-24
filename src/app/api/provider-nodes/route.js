@@ -80,7 +80,7 @@ export async function POST(request) {
     }
 
     // laya-hook
-    const layaNode = await createLayaNode(nodeType, { name, prefix, baseUrl, preset: body.preset }, { createProviderNode, generateId });
+    const layaNode = await createLayaNode(nodeType, { name, prefix, baseUrl }, { createProviderNode, generateId });
     if (layaNode) return layaNode;
 
     if (nodeType === "anthropic-compatible") {

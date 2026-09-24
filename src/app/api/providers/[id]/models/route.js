@@ -13,6 +13,7 @@ import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { resolveZedModels } from "open-sse/shared/zedAuth.js";
 import { resolveClineModels, resolveClinepassModels } from "open-sse/services/clinepassModels.js";
+import { tryFetchCustomSystemoneModels } from "@/laya/fetchModels.js"; // laya-hook
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
 
@@ -526,6 +527,19 @@ export async function GET(request, { params }) {
 
     if (!connection) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    }
+
+    // laya-hook
+    const customSystemone = await tryFetchCustomSystemoneModels(connection);
+    if (customSystemone) {
+      if (customSystemone.error) {
+        return NextResponse.json({ error: customSystemone.error }, { status: customSystemone.status || 502 });
+      }
+      return NextResponse.json({
+        provider: connection.provider,
+        connectionId: connection.id,
+        models: customSystemone.models,
+      });
     }
 
     if (isOpenAICompatibleProvider(connection.provider)) {
