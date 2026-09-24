@@ -34,16 +34,18 @@ function toImagePreviewSrc(value) {
   return `data:image/png;base64,${trimmed}`;
 }
 
-export function GenericExampleCard({ providerId, kind }) {
-  const providerAlias = getProviderAlias(providerId);
+// laya-hook: customAlias / modelOptions let a local overlay supply the prefix and model list.
+export function GenericExampleCard({ providerId, kind, customAlias, modelOptions }) {
+  const providerAlias = customAlias || getProviderAlias(providerId);
   const resolvedId = resolveProviderId(providerAlias);
-  const safeProviderAlias = resolvedId === providerId ? providerAlias : providerId;
+  const safeProviderAlias = customAlias || (resolvedId === providerId ? providerAlias : providerId);
   const kindConfig = MEDIA_PROVIDER_KINDS.find((k) => k.id === kind);
   const exConfig = KIND_EXAMPLE_CONFIG[kind];
   const safeExConfig = exConfig || {};
 
   // Get models for this kind (e.g., type="image")
-  const kindModels = getModelsByProviderId(providerId).filter((m) => getModelKind(m) === kind);
+  const registryModels = getModelsByProviderId(providerId).filter((m) => getModelKind(m) === kind);
+  const kindModels = modelOptions?.length ? modelOptions : registryModels;
   // Kinds that need a model identifier in the request (image/video/music/systemone)
   const KIND_NEEDS_MODEL = new Set(["image", "video", "music", "imageToText", "systemone"]);
   const needsModel = KIND_NEEDS_MODEL.has(kind);

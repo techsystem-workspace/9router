@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertPublicUrl } from "@/shared/utils/ssrfGuard.js";
 import { isLocalRequest } from "@/dashboardGuard";
+import { validateLayaNodeBody } from "@/laya/nodesApi.js"; // laya-hook
 
 // Fetch with timeout wrapper
 const fetchWithTimeout = (url, options, timeout = 10000) => {
@@ -56,6 +57,10 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { baseUrl, apiKey, type, modelId } = body;
+
+    // laya-hook — returns early so a keyless Laya URL skips the API-key guard below.
+    const layaCheck = await validateLayaNodeBody(body, { localRequest: isLocalRequest(request), assertPublicUrl });
+    if (layaCheck) return layaCheck;
 
     if (!baseUrl || !apiKey) {
       return NextResponse.json({ error: "Base URL and API key required" }, { status: 400 });

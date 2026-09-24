@@ -13,9 +13,19 @@ import { EmbeddingExampleCard } from "./components/EmbeddingExampleCard";
 import { TtsExampleCard } from "./components/TtsExampleCard";
 import { GenericExampleCard } from "./components/GenericExampleCard";
 import { SttExampleCard } from "./components/SttExampleCard";
+import LayaDetailPage from "@/laya/LayaDetailPage"; // laya-hook
+import { isCustomSystemoneProvider } from "@/laya/constants"; // laya-hook
 
-// MediaProviderDetailPage
+// laya-hook: custom System One nodes render outside this page.
 export default function MediaProviderDetailPage() {
+  const params = useParams();
+  if (params.kind === "systemone" && isCustomSystemoneProvider(params.id)) {
+    return <LayaDetailPage />;
+  }
+  return <UpstreamMediaProviderDetail />;
+}
+
+function UpstreamMediaProviderDetail() {
   const { kind, id } = useParams();
   const router = useRouter();
   const kindConfig = MEDIA_PROVIDER_KINDS.find((k) => k.id === kind);

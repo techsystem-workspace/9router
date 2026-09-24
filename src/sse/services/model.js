@@ -1,5 +1,6 @@
 // Re-export from open-sse with localDb integration
 import { getModelAliases, getComboByName, getProviderNodes } from "@/lib/localDb";
+import { resolveLayaModel } from "@/laya/resolveModel.js"; // laya-hook
 import { parseModel as parseModelCore, resolveModelAliasFromMap, getModelInfoCore } from "open-sse/services/model.js";
 import REGISTRY from "open-sse/providers/registry/index.js";
 
@@ -59,6 +60,10 @@ export async function getModelInfo(modelStr) {
       if (matchedEmbedding) {
         return { provider: matchedEmbedding.id, model: parsed.model };
       }
+
+      // laya-hook
+      const layaModel = await resolveLayaModel(parsed, getProviderNodes);
+      if (layaModel) return layaModel;
     }
     return {
       provider: parsed.provider,

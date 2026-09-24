@@ -9,6 +9,7 @@ import {
 import { APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { AI_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers";
 import { normalizeProviderId, normalizeProviderSpecificData } from "@/lib/providerNormalization";
+import { layaAllowsConnection, layaConnectionData } from "@/laya/nodesApi.js"; // laya-hook
 
 export const dynamic = "force-dynamic";
 
@@ -111,12 +112,13 @@ export async function POST(request) {
       isWebCookieProvider ||
       isOpenAICompatibleProvider(provider) ||
       isAnthropicCompatibleProvider(provider) ||
-      isCustomEmbeddingProvider(provider);
+      isCustomEmbeddingProvider(provider) ||
+      layaAllowsConnection(provider); // laya-hook
 
     if (!provider || !isValidProvider) {
       return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
     }
-    if (!apiKey && provider !== "ollama-local") {
+    if (!apiKey && provider !== "ollama-local" && !layaAllowsConnection(provider)) { // laya-hook
       return NextResponse.json({ error: `${isWebCookieProvider ? "Cookie value" : "API Key"} is required` }, { status: 400 });
     }
     const connectionName = name || displayName || AI_PROVIDERS[provider]?.name;
@@ -159,6 +161,11 @@ export async function POST(request) {
         baseUrl: node.baseUrl,
         nodeName: node.name,
       };
+    } else {
+      // laya-hook
+      const laya = await layaConnectionData(provider, getProviderNodeById);
+      if (laya?.error) return NextResponse.json({ error: laya.error }, { status: laya.status || 404 });
+      if (laya?.data) providerSpecificData = laya.data;
     }
 
     const mergedProviderSpecificData = {

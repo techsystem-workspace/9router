@@ -2,6 +2,7 @@ import { createErrorResult, parseUpstreamError, formatProviderError } from "../u
 import { HTTP_STATUS, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { PROVIDER_MEDIA } from "../providers/index.js";
 import { generateSessionId } from "../executors/opencode-zen.js";
+import { tryHandleCustomSystemone } from "../laya/handleCustom.js"; // laya-hook
 
 /**
  * Core System One (Jev) handler — native decision payload pass-through.
@@ -10,7 +11,14 @@ import { generateSessionId } from "../executors/opencode-zen.js";
  *
  * @returns {Promise<{ success: boolean, response: Response, usage?: object, status?: number, error?: string }>}
  */
-export async function handleSystemoneCore({
+// laya-hook: custom nodes are handled in open-sse/laya and never enter the builtin path.
+export async function handleSystemoneCore(args) {
+  const custom = await tryHandleCustomSystemone(args);
+  if (custom) return custom;
+  return handleBuiltinSystemoneCore(args);
+}
+
+async function handleBuiltinSystemoneCore({
   body,
   modelInfo,
   credentials,

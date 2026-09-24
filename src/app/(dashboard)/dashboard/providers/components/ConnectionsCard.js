@@ -194,7 +194,7 @@ ConnectionRow.propTypes = {
 };
 
 // ── AddApiKeyModal ─────────────────────────────────────────────
-function AddApiKeyModal({ isOpen, provider, providerName, proxyPools, onSave, onClose }) {
+function AddApiKeyModal({ isOpen, provider, providerName, proxyPools, onSave, onClose, apiKeyOptional = false }) {
   const NONE = "__none__";
   const [formData, setFormData] = useState({ name: "", apiKey: "", priority: 1, proxyPoolId: NONE });
   const [validating, setValidating] = useState(false);
@@ -216,7 +216,7 @@ function AddApiKeyModal({ isOpen, provider, providerName, proxyPools, onSave, on
   };
 
   const handleSubmit = async () => {
-    if (!provider || !formData.apiKey) return;
+    if (!provider || (!formData.apiKey && !apiKeyOptional)) return;
     setSaving(true);
     try {
       let isValid = false;
@@ -253,11 +253,11 @@ function AddApiKeyModal({ isOpen, provider, providerName, proxyPools, onSave, on
         </div>
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="text-xs text-text-muted mb-1 block">API Key</label>
-            <input type="password" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary" value={formData.apiKey} onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })} />
+            <label className="text-xs text-text-muted mb-1 block">{apiKeyOptional ? "API Key (optional)" : "API Key"}</label>
+            <input type="password" className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary" value={formData.apiKey} onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })} placeholder={apiKeyOptional ? "Leave empty for a local server" : undefined} />
           </div>
           <div className="pt-6">
-            <Button onClick={handleValidate} disabled={!formData.apiKey || validating || saving} variant="secondary">
+            <Button onClick={handleValidate} disabled={(!formData.apiKey && !apiKeyOptional) || validating || saving} variant="secondary">
               {validating ? "Checking..." : "Check"}
             </Button>
           </div>
@@ -274,7 +274,7 @@ function AddApiKeyModal({ isOpen, provider, providerName, proxyPools, onSave, on
         <Select label="Proxy Pool" value={formData.proxyPoolId} onChange={(e) => setFormData({ ...formData, proxyPoolId: e.target.value })}
           options={[{ value: NONE, label: "None" }, ...(proxyPools || []).map((p) => ({ value: p.id, label: p.name }))]} />
         <div className="flex gap-2">
-          <Button onClick={handleSubmit} fullWidth disabled={!formData.name || !formData.apiKey || saving}>
+          <Button onClick={handleSubmit} fullWidth disabled={!formData.name || (!formData.apiKey && !apiKeyOptional) || saving}>
             {saving ? "Saving..." : "Save"}
           </Button>
           <Button onClick={onClose} variant="ghost" fullWidth>Cancel</Button>
@@ -291,11 +291,13 @@ AddApiKeyModal.propTypes = {
   proxyPools: PropTypes.array,
   onSave: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
+  apiKeyOptional: PropTypes.bool,
 };
 
 // ── ConnectionsCard ────────────────────────────────────────────
 // Self-contained card: fetches, displays and manages all connections for a provider.
-export default function ConnectionsCard({ providerId, isOAuth }) {
+// laya-hook: apiKeyOptional lets a local Laya server save a connection with no key.
+export default function ConnectionsCard({ providerId, isOAuth, apiKeyOptional = false }) {
   const [connections, setConnections] = useState([]);
   const [proxyPools, setProxyPools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -463,6 +465,7 @@ export default function ConnectionsCard({ providerId, isOAuth }) {
         isOpen={showAddModal}
         provider={providerId}
         proxyPools={proxyPools}
+        apiKeyOptional={apiKeyOptional}
         onSave={handleSaveApiKey}
         onClose={() => setShowAddModal(false)}
       />
@@ -490,4 +493,5 @@ export default function ConnectionsCard({ providerId, isOAuth }) {
 ConnectionsCard.propTypes = {
   providerId: PropTypes.string.isRequired,
   isOAuth: PropTypes.bool,
+  apiKeyOptional: PropTypes.bool,
 };
