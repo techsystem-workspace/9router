@@ -27,7 +27,8 @@ async function handleBuiltinSystemoneCore({
 }) {
   const { provider, model } = modelInfo;
   const cfg = PROVIDER_MEDIA[provider]?.systemoneConfig;
-  if (!cfg?.baseUrl) {
+  const targetUrl = credentials?.providerSpecificData?.baseUrl || cfg?.baseUrl;
+  if (!targetUrl) {
     return createErrorResult(
       HTTP_STATUS.BAD_REQUEST,
       `Provider '${provider}' does not support System One.`
@@ -57,7 +58,7 @@ async function handleBuiltinSystemoneCore({
 
   let providerResponse;
   try {
-    providerResponse = await fetch(cfg.baseUrl, {
+    providerResponse = await fetch(targetUrl, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
