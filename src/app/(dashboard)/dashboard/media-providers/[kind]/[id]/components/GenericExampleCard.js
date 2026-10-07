@@ -34,7 +34,7 @@ function toImagePreviewSrc(value) {
   return `data:image/png;base64,${trimmed}`;
 }
 
-// laya-hook: customAlias / modelOptions supply the prefix and model list.
+// systemone-hook: customAlias / modelOptions supply the prefix and model list.
 // payloadEditor replaces the fixed System One question with a full payload form.
 export function GenericExampleCard({ providerId, kind, customAlias, modelOptions, payloadEditor = null }) {
   const providerAlias = customAlias || getProviderAlias(providerId);

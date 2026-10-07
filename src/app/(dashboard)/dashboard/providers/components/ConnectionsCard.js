@@ -296,7 +296,7 @@ AddApiKeyModal.propTypes = {
 
 // ── ConnectionsCard ────────────────────────────────────────────
 // Self-contained card: fetches, displays and manages all connections for a provider.
-// laya-hook: apiKeyOptional lets a local Laya server save a connection with no key.
+// systemone-hook: apiKeyOptional lets a local System One server save a connection with no key.
 export default function ConnectionsCard({ providerId, isOAuth, apiKeyOptional = false }) {
   const [connections, setConnections] = useState([]);
   const [proxyPools, setProxyPools] = useState([]);

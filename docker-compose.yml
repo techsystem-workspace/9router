@@ -5,8 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
-    # Host network so the saved Laya URL http://127.0.0.1:8000 still reaches
-    # the Laya container published only on the host loopback.
+    # Host network so a saved System One URL on http://127.0.0.1:8000 still reaches
+    # a server published only on the host loopback.
     network_mode: host
     volumes:
       - ./9router-data:/app/data

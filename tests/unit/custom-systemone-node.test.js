@@ -105,8 +105,8 @@ describe("custom systemone nodes", () => {
     expect(models).toEqual([]);
   });
 
-  it("confirms a keyless Laya server from GET /health", async () => {
-    const { probeLaya } = await import("@/laya/store.js");
+  it("confirms a keyless System One server from GET /health", async () => {
+    const { probeCustomSystemone } = await import("@/systemone-hook/store.js");
     const originalFetch = globalThis.fetch;
     const calls = [];
     globalThis.fetch = async (url, init) => {
@@ -120,7 +120,7 @@ describe("custom systemone nodes", () => {
       throw new Error(`unexpected ${url}`);
     };
     try {
-      const result = await probeLaya("http://127.0.0.1:8000/v1/systemone/", "");
+      const result = await probeCustomSystemone("http://127.0.0.1:8000/v1/systemone/", "");
       expect(result).toMatchObject({ valid: true, method: "health", loaded: ["english"], device: "cpu" });
       expect(calls).toEqual([{ url: "http://127.0.0.1:8000/health", method: "GET" }]);
     } finally {

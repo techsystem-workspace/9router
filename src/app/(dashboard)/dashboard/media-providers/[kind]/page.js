@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Card, Badge, Button, Toggle, AddCustomEmbeddingModal } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
 import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS, getProvidersByKind } from "@/shared/constants/providers";
-import LayaKindSection from "@/laya/LayaKindSection"; // laya-hook
+import CustomSystemoneKindSection from "@/systemone-hook/CustomSystemoneKindSection"; // systemone-hook
 
 // Kinds that support combos (currently disabled for image/tts — temporarily hidden).
 // webSearch/webFetch handled by /web page.
@@ -230,8 +230,8 @@ export default function MediaProviderKindPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* laya-hook */}
-      <LayaKindSection kind={kind} />
+      {/* systemone-hook */}
+      <CustomSystemoneKindSection kind={kind} />
       {(isEmbedding || supportsCombo) && (
         <div className="flex items-center justify-end gap-2">
           {supportsCombo && (

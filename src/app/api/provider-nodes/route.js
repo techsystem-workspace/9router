@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createProviderNode, getProviderNodes } from "@/models";
 import { OPENAI_COMPATIBLE_PREFIX, ANTHROPIC_COMPATIBLE_PREFIX, CUSTOM_EMBEDDING_PREFIX } from "@/shared/constants/providers";
 import { generateId } from "@/shared/utils";
-import { createLayaNode } from "@/laya/nodesApi.js"; // laya-hook
+import { createCustomSystemoneNode } from "@/systemone-hook/nodesApi.js"; // systemone-hook
 
 export const dynamic = "force-dynamic";
 
@@ -79,9 +79,9 @@ export async function POST(request) {
       return NextResponse.json({ node }, { status: 201 });
     }
 
-    // laya-hook
-    const layaNode = await createLayaNode(nodeType, { name, prefix, baseUrl }, { createProviderNode, generateId });
-    if (layaNode) return layaNode;
+    // systemone-hook
+    const customSystemoneNode = await createCustomSystemoneNode(nodeType, { name, prefix, baseUrl }, { createProviderNode, generateId });
+    if (customSystemoneNode) return customSystemoneNode;
 
     if (nodeType === "anthropic-compatible") {
       // Sanitize Base URL: remove trailing slash, and remove trailing /messages if user added it

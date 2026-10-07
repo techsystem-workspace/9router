@@ -2,7 +2,7 @@ import { createErrorResult, formatProviderError } from "../utils/error.js";
 import { HTTP_STATUS, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
 import { isCustomSystemoneProvider } from "./constants.js";
 
-// Laya answers FastAPI errors as `{ detail: "..." }`. Parsed here so the shared
+// Some servers answer errors as `{ detail: "..." }`. Parsed here so the shared
 // upstream error helper can stay untouched.
 function messageFromBody(text) {
   try {

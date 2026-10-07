@@ -13,7 +13,7 @@ import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
 import { resolveCursorModels } from "open-sse/services/cursorModels.js";
 import { resolveZedModels } from "open-sse/shared/zedAuth.js";
 import { resolveClineModels, resolveClinepassModels } from "open-sse/services/clinepassModels.js";
-import { tryFetchCustomSystemoneModels } from "@/laya/fetchModels.js"; // laya-hook
+import { tryFetchCustomSystemoneModels } from "@/systemone-hook/fetchModels.js"; // systemone-hook
 import codexProvider from "open-sse/providers/registry/codex.js";
 
 const GEMINI_CLI_MODELS_URL = "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels";
@@ -540,7 +540,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
 
-    // laya-hook
+    // systemone-hook
     const customSystemone = await tryFetchCustomSystemoneModels(connection);
     if (customSystemone) {
       if (customSystemone.error) {

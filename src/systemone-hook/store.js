@@ -1,10 +1,10 @@
 import { deleteCustomModel, getCustomModels } from "@/lib/db/index.js";
 
-export function layaHealthUrl(systemoneUrl) {
+export function systemoneHealthUrl(systemoneUrl) {
   return `${new URL(systemoneUrl).origin}/health`;
 }
 
-export function layaProbeBody(modelId) {
+export function systemoneProbeBody(modelId) {
   return {
     model: (modelId || "english").trim() || "english",
     state: "ping",
@@ -23,13 +23,13 @@ function detailFromBody(text) {
   return text.slice(0, 200);
 }
 
-// Keyless Laya is confirmed with GET /health so Check does not wait on inference.
-// A key is still POSTed, because /health never checks LAYA_API_KEY.
-export async function probeLaya(systemoneUrl, apiKey, modelId) {
+// A keyless node is confirmed with GET /health so Check does not wait on inference.
+// A key is still POSTed, because /health never checks the server API key.
+export async function probeCustomSystemone(systemoneUrl, apiKey, modelId) {
   const url = String(systemoneUrl || "").trim().replace(/\/+$/, "");
   let health = null;
   try {
-    const healthRes = await fetch(layaHealthUrl(url), { signal: AbortSignal.timeout(8000) });
+    const healthRes = await fetch(systemoneHealthUrl(url), { signal: AbortSignal.timeout(8000) });
     if (healthRes.ok) {
       health = await healthRes.json().catch(() => ({}));
       if (!apiKey) {
@@ -47,14 +47,14 @@ export async function probeLaya(systemoneUrl, apiKey, modelId) {
     probeRes = await fetch(url, {
       method: "POST",
       headers,
-      body: JSON.stringify(layaProbeBody(modelId)),
+      body: JSON.stringify(systemoneProbeBody(modelId)),
       signal: AbortSignal.timeout(8000),
     });
   } catch (error) {
     if (health) {
       return { valid: true, method: "health", loaded: health.loaded || null, device: health.device || null };
     }
-    return { valid: false, error: error?.message || "Laya endpoint unreachable" };
+    return { valid: false, error: error?.message || "System One endpoint unreachable" };
   }
 
   if (probeRes.ok) return { valid: true, method: "systemone" };
@@ -67,7 +67,7 @@ export async function probeLaya(systemoneUrl, apiKey, modelId) {
   }
   return {
     valid: false,
-    error: `Laya request failed (${probeRes.status})${detail ? `: ${detail}` : ""}`,
+    error: `System One request failed (${probeRes.status})${detail ? `: ${detail}` : ""}`,
   };
 }
 

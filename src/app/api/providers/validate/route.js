@@ -6,7 +6,7 @@ import { resolveOllamaLocalHost, resolveXiaomiTokenplanBaseUrl, PROVIDERS } from
 import { openaiToCommandCodeRequest } from "open-sse/translator/request/openai-to-commandcode.js";
 import { resolveQoderCredentials, resolveQoderModels } from "open-sse/services/qoderModels.js";
 import { normalizeProviderId } from "@/lib/providerNormalization";
-import { validateLayaConnection } from "@/laya/nodesApi.js"; // laya-hook
+import { validateCustomSystemoneConnection } from "@/systemone-hook/nodesApi.js"; // systemone-hook
 
 // Probe a webSearch/webFetch provider using its searchConfig/fetchConfig.
 // Returns true if API key is accepted (status !== 401 && !== 403).
@@ -89,9 +89,9 @@ export async function POST(request) {
     const provider = normalizeProviderId(body.provider);
     const { apiKey, providerSpecificData } = body;
 
-    // laya-hook — handled before the API-key guard so a local server can omit the key.
-    const layaValidation = await validateLayaConnection(provider, apiKey, getProviderNodeById);
-    if (layaValidation) return layaValidation;
+    // systemone-hook — handled before the API-key guard so a local server can omit the key.
+    const customSystemoneValidation = await validateCustomSystemoneConnection(provider, apiKey, getProviderNodeById);
+    if (customSystemoneValidation) return customSystemoneValidation;
 
     const isNoAuth = AI_PROVIDERS[provider]?.noAuth === true;
     if (!provider || (!apiKey && provider !== "ollama-local" && !isNoAuth)) {

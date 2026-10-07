@@ -1,5 +1,5 @@
 // Request body for the custom System One example card.
-// Shape matches laya-serve: { model, state, questions: { name: { type, instructions, criteria? } } }.
+// Shape: { model, state, questions: { name: { type, instructions, criteria? } } }.
 
 export const SYSTEMONE_QUESTION_TYPES = ["noul", "choice", "score"];
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSystemoneModelList, systemoneModelsUrl } from "../../src/laya/fetchModels.js";
+import { parseSystemoneModelList, systemoneModelsUrl } from "../../src/systemone-hook/fetchModels.js";
 
 describe("custom systemone model fetch", () => {
   it("derives /v1/models from the decision endpoint", () => {
@@ -12,12 +12,12 @@ describe("custom systemone model fetch", () => {
   it("reads OpenAI-style ids and drops this node's prefix", () => {
     const models = parseSystemoneModelList({
       data: [
-        { id: "laya/Winnow-12B", name: "Winnow" },
+        { id: "local/Winnow-12B", name: "Winnow" },
         { id: "english" },
         "english",
         { id: "" },
       ],
-    }, "laya");
+    }, "local");
     expect(models).toEqual([
       { id: "Winnow-12B", name: "Winnow" },
       { id: "english", name: "english" },

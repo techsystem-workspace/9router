@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteProviderConnectionsByProvider, deleteProviderNode, getProviderConnections, getProviderNodeById, updateProviderConnection, updateProviderNode } from "@/models";
-import { beforeLayaNodeDelete, normalizeLayaNodeUrl } from "@/laya/nodesApi.js"; // laya-hook
+import { beforeCustomSystemoneNodeDelete, normalizeCustomSystemoneUrl } from "@/systemone-hook/nodesApi.js"; // systemone-hook
 
 // PUT /api/provider-nodes/[id] - Update provider node
 export async function PUT(request, { params }) {
@@ -33,10 +33,10 @@ export async function PUT(request, { params }) {
 
     let sanitizedBaseUrl = baseUrl.trim();
 
-    // laya-hook
-    const layaUrl = normalizeLayaNodeUrl(node, sanitizedBaseUrl);
-    if (layaUrl?.error) return NextResponse.json({ error: layaUrl.error }, { status: 400 });
-    if (layaUrl?.url) sanitizedBaseUrl = layaUrl.url;
+    // systemone-hook
+    const customSystemoneUrl = normalizeCustomSystemoneUrl(node, sanitizedBaseUrl);
+    if (customSystemoneUrl?.error) return NextResponse.json({ error: customSystemoneUrl.error }, { status: 400 });
+    if (customSystemoneUrl?.url) sanitizedBaseUrl = customSystemoneUrl.url;
     
     // Sanitize Base URL for Anthropic Compatible
     if (node.type === "anthropic-compatible") {
@@ -96,7 +96,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Provider node not found" }, { status: 404 });
     }
 
-    await beforeLayaNodeDelete(node); // laya-hook
+    await beforeCustomSystemoneNodeDelete(node); // systemone-hook
     await deleteProviderConnectionsByProvider(id);
     await deleteProviderNode(id);
 

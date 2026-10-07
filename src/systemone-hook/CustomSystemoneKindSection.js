@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, Badge, Button } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
-import AddLayaModal from "./AddModal";
+import AddCustomSystemoneModal from "./AddModal";
 import { CUSTOM_SYSTEMONE_NODE_TYPE } from "./constants";
 
-// Self-contained System One listing for Laya nodes. The media-providers page
+// Self-contained listing for custom System One nodes. The media-providers page
 // only renders this component, so upstream changes to that page stay small.
-export default function LayaKindSection({ kind }) {
+export default function CustomSystemoneKindSection({ kind }) {
   const [nodes, setNodes] = useState([]);
   const [open, setOpen] = useState(false);
 
@@ -41,8 +41,7 @@ export default function LayaKindSection({ kind }) {
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#7C3AED15" }}>
                     <ProviderIcon
-                      src="/providers/laya.png"
-                      alt={node.name || "Laya"}
+                      alt={node.name || "System One"}
                       size={30}
                       className="object-contain rounded-lg max-w-[30px] max-h-[30px]"
                       fallbackText="S1"
@@ -50,7 +49,7 @@ export default function LayaKindSection({ kind }) {
                     />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{node.name || "Laya"}</h3>
+                    <h3 className="font-semibold text-sm truncate">{node.name || "System One"}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Badge variant="default" size="sm">Custom</Badge>
                       <span className="text-xs text-text-muted truncate">{node.baseUrl}</span>
@@ -62,7 +61,7 @@ export default function LayaKindSection({ kind }) {
           ))}
         </div>
       )}
-      <AddLayaModal
+      <AddCustomSystemoneModal
         isOpen={open}
         onClose={() => setOpen(false)}
         onCreated={(node) => {

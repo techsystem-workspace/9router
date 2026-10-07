@@ -3,7 +3,7 @@ import {
   defaultSystemoneQuestions,
   questionsReady,
   questionsToBody,
-} from "../../src/laya/payload.js";
+} from "../../src/systemone-hook/payload.js";
 
 describe("custom systemone example payload", () => {
   it("builds the default decision payload", () => {

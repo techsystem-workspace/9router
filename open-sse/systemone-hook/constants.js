@@ -1,4 +1,4 @@
-// Local overlay for a self-hosted Laya server (laya-serve).
+// Local overlay for a custom System One node.
 // This directory is not part of upstream 9router. Keep the prefix stable:
 // dashboard node ids are `${CUSTOM_SYSTEMONE_PREFIX}${id}`.
 

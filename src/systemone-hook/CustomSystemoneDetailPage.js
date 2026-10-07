@@ -8,14 +8,14 @@ import ProviderIcon from "@/shared/components/ProviderIcon";
 import ConnectionsCard from "@/app/(dashboard)/dashboard/providers/components/ConnectionsCard";
 import ModelsCard from "@/app/(dashboard)/dashboard/providers/components/ModelsCard";
 import { GenericExampleCard } from "@/app/(dashboard)/dashboard/media-providers/[kind]/[id]/components/GenericExampleCard";
-import AddLayaModal from "./AddModal";
+import AddCustomSystemoneModal from "./AddModal";
 import SystemonePayloadFields from "./PayloadFields";
 import FetchModelsButton from "./FetchModelsButton";
 import { defaultSystemoneQuestions, questionsReady, questionsToBody } from "./payload";
 
 // Detail page for a custom-systemone node. Mounted only for those ids so the
 // upstream media-provider detail page does not grow a second provider shape.
-export default function LayaDetailPage() {
+export default function CustomSystemoneDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const [node, setNode] = useState(null);
@@ -65,7 +65,7 @@ export default function LayaDetailPage() {
   }, [node?.prefix]);
 
   const handleDelete = async () => {
-    if (!confirm("Delete this Laya node?")) return;
+    if (!confirm("Delete this System One node?")) return;
     const res = await fetch(`/api/provider-nodes/${id}`, { method: "DELETE" });
     if (res.ok) router.push("/dashboard/media-providers/systemone");
   };
@@ -86,8 +86,7 @@ export default function LayaDetailPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="size-12 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#7C3AED15" }}>
             <ProviderIcon
-              src="/providers/laya.png"
-              alt={node.name || "Laya"}
+              alt={node.name || "System One"}
               size={48}
               className="object-contain rounded-lg max-w-[48px] max-h-[48px]"
               fallbackText="S1"
@@ -95,7 +94,7 @@ export default function LayaDetailPage() {
             />
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-semibold tracking-tight">{node.name || "Laya"}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{node.name || "System One"}</h1>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <Badge variant="default" size="sm">Custom · {node.prefix}</Badge>
               <Badge variant="primary" size="sm">SYSTEMONE</Badge>
@@ -145,7 +144,7 @@ export default function LayaDetailPage() {
         }}
       />
 
-      <AddLayaModal
+      <AddCustomSystemoneModal
         isOpen={editing}
         node={node}
         onClose={() => setEditing(false)}
